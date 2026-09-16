@@ -1,0 +1,3 @@
+# Core simulation uses the Python standard library only.
+# Optional extras:
+pytest>=8.0
