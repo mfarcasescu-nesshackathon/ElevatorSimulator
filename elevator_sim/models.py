@@ -17,12 +17,17 @@ class Request:
     id: str
     source: int
     dest: int
+    name: str = ""
+    role: str = "guest"
+    icon: str = "user"
 
     def __post_init__(self) -> None:
         if self.time < 0:
             raise ValueError(f"request {self.id} has negative time")
         if self.source == self.dest:
             raise ValueError(f"request {self.id} has source == dest")
+        if self.role not in {"employee", "guest"}:
+            object.__setattr__(self, "role", "guest")
 
 
 @dataclass
@@ -34,6 +39,9 @@ class Passenger:
     assigned_elevator: int | None = None
     pickup_time: int | None = None
     dropoff_time: int | None = None
+    name: str = ""
+    role: str = "guest"
+    icon: str = "user"
 
     @property
     def direction(self) -> int:
@@ -95,8 +103,26 @@ class Elevator:
             "capacity": self.capacity,
             "onboard": [p.id for p in self.passengers],
             "onboard_dests": [p.dest for p in self.passengers],
+            "onboard_people": [_person_payload(p) for p in self.passengers],
             "pending_pickups": [
-                {"id": p.id, "floor": p.source, "dest": p.dest} for p in self.pending
+                {"id": p.id, "floor": p.source, "dest": p.dest, **_identity(p)}
+                for p in self.pending
             ],
             "allowed_floors": sorted(self.allowed_floors) if self.allowed_floors else None,
         }
+
+
+def _identity(passenger: Passenger) -> dict:
+    return {
+        "name": passenger.name or passenger.id,
+        "role": passenger.role if passenger.role in {"employee", "guest"} else "guest",
+        "icon": passenger.icon or "user",
+    }
+
+
+def _person_payload(passenger: Passenger) -> dict:
+    return {
+        "id": passenger.id,
+        "dest": passenger.dest,
+        **_identity(passenger),
+    }

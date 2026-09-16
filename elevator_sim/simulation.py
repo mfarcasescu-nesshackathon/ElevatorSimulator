@@ -16,6 +16,7 @@ class SimulationResult:
     passengers: list[Passenger]
     ticks: int
     extra: dict = field(default_factory=dict)
+    snapshots: list[dict] = field(default_factory=list)
 
 
 class PeekingScheduler:
@@ -62,6 +63,7 @@ def run_simulation(
     admitted: dict[str, Passenger] = {}
     completed: list[Passenger] = []
     positions: list[list[int]] = []
+    snapshots: list[dict] = []
     time = 0
     limit = max_ticks if max_ticks is not None else _default_max_ticks(pending_requests, config)
 
@@ -84,11 +86,11 @@ def run_simulation(
         unfinished = any(
             passenger.dropoff_time is None for passenger in admitted.values()
         )
-        if not pending_requests and not unfinished:
+        done = not pending_requests and not unfinished
+        snapshots.append(_tick_state(time, config, elevators, admitted, completed, done=done))
+        if done:
             if publisher is not None:
-                publisher.publish(
-                    _tick_state(time, config, elevators, admitted, completed, done=True)
-                )
+                publisher.publish(snapshots[-1])
             break
 
         for elevator in elevators:
@@ -106,6 +108,7 @@ def run_simulation(
         passengers=sorted(completed, key=lambda passenger: passenger.id),
         ticks=time,
         extra={"admitted": len(admitted)},
+        snapshots=snapshots,
     )
 
 
@@ -141,6 +144,9 @@ def _admit(
             source=request.source,
             dest=request.dest,
             request_time=request.time,
+            name=request.name or request.id,
+            role=request.role,
+            icon=request.icon,
         )
         admitted[passenger.id] = passenger
         batch.append(passenger)
@@ -275,6 +281,11 @@ def _tick_state(
             "floor": passenger.source,
             "dest": passenger.dest,
             "elevator": passenger.assigned_elevator,
+            "request_time": passenger.request_time,
+            "is_new": passenger.request_time == time,
+            "name": passenger.name or passenger.id,
+            "role": passenger.role,
+            "icon": passenger.icon,
         }
         for passenger in admitted.values()
         if passenger.pickup_time is None

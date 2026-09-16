@@ -81,6 +81,20 @@ blender --python blender/live_listener.py -- --host 127.0.0.1 --port 8765 --floo
 
 Details: [blender/README.md](blender/README.md). The CLI + logs already satisfy the take-home if you skip Blender.
 
+### Browser visualizer
+
+Blender cannot run inside a web page, so the same animation is recreated with Three.js. The Python engine still does the scheduling. Configure elevators (1–10), floors, and capacity, then press Run.
+
+```bash
+# terminal A
+python -m elevator_sim web --port 8766
+
+# terminal B
+cd web && npm install && npm run dev
+```
+
+Open http://localhost:3000. Drag to orbit the building. Yellow dots are waiting passengers.
+
 ## Time modeling
 
 - One time unit = one floor of travel (up or down).

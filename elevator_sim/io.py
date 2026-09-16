@@ -23,6 +23,9 @@ def parse_requests(source: str | Path) -> list[Request]:
                     id=row["id"].strip(),
                     source=int(row["source"].strip()),
                     dest=int(row["dest"].strip()),
+                    name=(row.get("name") or "").strip(),
+                    role=(row.get("role") or "guest").strip() or "guest",
+                    icon=(row.get("icon") or "user").strip() or "user",
                 )
             )
     return requests

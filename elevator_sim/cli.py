@@ -52,6 +52,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Also run the Grok batch dispatcher (requires XAI_API_KEY)",
     )
     compare_parser.set_defaults(func=_cmd_compare)
+
+    web_parser = sub.add_parser("web", help="HTTP API for the browser visualizer")
+    web_parser.add_argument("--host", default="127.0.0.1")
+    web_parser.add_argument("--port", type=int, default=8766)
+    web_parser.set_defaults(func=_cmd_web)
     return parser
 
 
@@ -145,6 +150,13 @@ def _cmd_compare(args: argparse.Namespace) -> int:
             f"wait_max={summary['wait']['max']}"
         )
     print(f"Wrote comparison files under {args.output_dir}")
+    return 0
+
+
+def _cmd_web(args: argparse.Namespace) -> int:
+    from elevator_sim.server import run_web_server
+
+    run_web_server(host=args.host, port=args.port)
     return 0
 
 
